@@ -11,6 +11,7 @@ metadata:
   {{- with .Values.loadBalancer.annotations }}
     {{- toYaml . | nindent 4 }}
   {{- end }}
+  
   # AWS ALB
   {{- if eq .Values.loadBalancer.type "alb" }}
     kubernetes.io/ingress.class: alb
@@ -19,19 +20,20 @@ metadata:
     alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS":443}]'
     {{- end }}
   {{- end }}
+  
   # GKE with managed certs
   {{- if eq .Values.loadBalancer.type "gke-managed-cert" }}
     kubernetes.io/ingress.global-static-ip-name: {{ .Values.loadBalancer.staticIpName }}
     networking.gke.io/managed-certificates: {{ or .Values.loadBalancer.certificateName "managed-cert" }}
     kubernetes.io/ingress.class: "gce"
   {{- end }}
+  
   # DO with cert manager
   {{- if eq .Values.loadBalancer.type "do" }}
     cert-manager.io/cluster-issuer: {{ .Values.loadBalancer.clusterIssuer }}
   {{- end }}
   
   # LKE Nodebalancer with cert manager
-   
   {{- if eq .Values.loadBalancer.type "lke" }}
     cert-manager.io/ClusterIssuer: {{ .Values.loadBalancer.clusterIssuer }}
   {{- end }}
@@ -60,6 +62,26 @@ spec:
             port:
               number: {{ $svcPort }}
   {{- end }}
+  
+  {{- if eq .Values.loadBalancer.type "lke" }}
+  ingressClassName: "nginx"
+  {{- end }}
+  rules:
+  # In order to work with cert manager on LKE
+  {{- range .Values.loadBalancer.tls }}
+  {{- range .hosts }}
+  - host: {{ . | quote }}
+    http:
+      paths:
+      - pathType: Prefix
+        path: "/"
+        backend:
+          service:
+            name: {{ $fullName }}
+            port:
+              number: {{ $svcPort }}
+  {{- end }}
+  
   {{- end }}
 {{- with .Values.loadBalancer }}
   {{- if .tls }}
