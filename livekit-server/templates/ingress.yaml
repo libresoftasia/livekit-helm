@@ -33,7 +33,7 @@ metadata:
   # LKE Nodebalancer with cert manager
    
   {{- if eq .Values.loadBalancer.type "lke" }}
-    cert-manager.io/cluster-issuer: {{ .Values.loadBalancer.clusterIssuer }}
+    cert-manager.io/cluster-issuerClusterIssuer: {{ .Values.loadBalancer.clusterIssuer }}
   {{- end }}
    
 {{- if semverCompare ">=1.19-0" .Capabilities.KubeVersion.GitVersion }}
